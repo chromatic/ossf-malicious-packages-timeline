@@ -1,0 +1,77 @@
+name: Generate Daily Timeslices
+
+on:
+  schedule:
+  - cron: '17 */3 * * *' # Every 3 hours
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Backfill a specific day (YYYY-MM-DD). Omit for normal today/yesterday run.'
+        required: false
+
+permissions: read-all
+
+jobs:
+  generate:
+    name: Generate Timeslice
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # push is authenticated via PUSH_PAT in the checkout token
+
+    steps:
+    - name: Checkout timeline repo (daily-timeslices branch)
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        ref: daily-timeslices
+        token: ${{ secrets.PUSH_PAT }}
+        path: timeline
+
+    - name: Checkout source repo (full history)
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        repository: chromatic/ossf-malicious-packages
+        ref: main
+        fetch-depth: 0
+        path: source
+
+    - name: Finalise yesterday (immutable)
+      # Writes timeslice-YYYY-MM-DD.json.gz for yesterday.
+      # Script skips silently if the file already exists.
+      # Skipped when backfilling a specific date.
+      if: ${{ inputs.date == '' }}
+      run: |
+        bash timeline/tools/generate_daily_timeslice.sh \
+          "$(date -u -d yesterday '+%Y-%m-%d')" \
+          source \
+          timeline/data/timeslices
+
+    - name: Update staging (today so far)
+      # Writes timeslice-staging.json.gz for today's commits so far.
+      # Skipped when backfilling a specific date.
+      if: ${{ inputs.date == '' }}
+      run: |
+        bash timeline/tools/generate_daily_timeslice.sh \
+          "$(date -u '+%Y-%m-%d')" \
+          source \
+          timeline/data/timeslices \
+          --staging
+
+    - name: Backfill specific date (immutable)
+      # Only runs when workflow_dispatch provides a date.
+      # Overwrites any existing file for that date.
+      if: ${{ inputs.date != '' }}
+      run: |
+        bash timeline/tools/generate_daily_timeslice.sh \
+          "${{ inputs.date }}" \
+          source \
+          timeline/data/timeslices
+
+    - name: Commit and push
+      run: |
+        cd timeline
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git add data/timeslices/
+        git diff --cached --quiet || git commit -m \
+          "Update timeslices ($(date -u '+%Y-%m-%dT%H:%MZ'))"
+        git push origin daily-timeslices
