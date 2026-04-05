@@ -32,7 +32,17 @@ jobs:
         token: ${{ secrets.PUSH_PAT }}
         path: timeline
 
-    - name: Checkout source repo (full history)
+    - name: Checkout source repo (shallow, 2 days)
+      if: ${{ inputs.date == '' }}
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        repository: chromatic/ossf-malicious-packages
+        ref: main
+        shallow-since: '2 days ago'
+        path: source
+
+    - name: Checkout source repo (full history, for backfill)
+      if: ${{ inputs.date != '' }}
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         repository: chromatic/ossf-malicious-packages
