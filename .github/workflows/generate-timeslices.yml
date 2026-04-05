@@ -51,7 +51,7 @@ jobs:
         path: source
 
     - name: Finalise yesterday (immutable)
-      # Writes timeslice-YYYY-MM-DD.json.gz for yesterday.
+      # Writes malicious-packages-YYYY-MM-DD.jsonl.gz for yesterday.
       # Script skips silently if the file already exists.
       # Skipped when backfilling a specific date.
       if: ${{ inputs.date == '' }}
@@ -62,7 +62,7 @@ jobs:
           timeline/data/timeslices
 
     - name: Update staging (today so far)
-      # Writes timeslice-staging.json.gz for today's commits so far.
+      # Writes malicious-packages-staging.jsonl.gz for today's commits so far.
       # Skipped when backfilling a specific date.
       if: ${{ inputs.date == '' }}
       run: |
