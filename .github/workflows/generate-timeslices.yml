@@ -31,6 +31,7 @@ jobs:
         repository: chromatic/ossf-malicious-packages
         ref: main
         fetch-depth: 150
+        filter: blob:none
         path: source
 
     - name: Checkout source repo (full history, for backfill)
@@ -39,7 +40,8 @@ jobs:
       with:
         repository: chromatic/ossf-malicious-packages
         ref: main
-        fetch-depth: 150
+        fetch-depth: 0
+        filter: blob:none
         path: source
 
     - name: Finalise yesterday (immutable)

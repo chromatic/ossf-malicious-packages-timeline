@@ -29,6 +29,6 @@ FETCH_DEPTH=$(( ( (MAX_PER_DAY * 2 * 125 / 100) + 9 ) / 10 * 10 ))
 
 echo "Setting fetch-depth to: $FETCH_DEPTH"
 
-sed -i "s/fetch-depth: [0-9]*/fetch-depth: $FETCH_DEPTH/" "$WORKFLOW"
+sed -i "s/fetch-depth: [1-9][0-9]*/fetch-depth: $FETCH_DEPTH/" "$WORKFLOW"
 
 echo "Updated $WORKFLOW"
